@@ -73,7 +73,8 @@ class SubmiteDataset(object):
         if self.dynamic_bs:
             calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * dynamic_baseline(calib_info)
         else:
-            calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.54
+            #calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.54
+            calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.2986
         imgL = Image.open(left_img).convert('RGB')
         imgR = Image.open(right_img).convert('RGB')
         imgL = self.trans(imgL)[None, :, :, :]

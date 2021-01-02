@@ -105,3 +105,6 @@ venv.bak/
 
 .idea
 .vscode
+
+#do not add model files to the repo
+.pth

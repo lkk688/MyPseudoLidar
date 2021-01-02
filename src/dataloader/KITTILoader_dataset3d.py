@@ -79,7 +79,8 @@ class myImageFloder(data.Dataset):
         if self.dynamic_bs:
             calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * dynamic_baseline(calib_info)
         else:
-            calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.54
+            #calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.54
+            calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.2986
 
         left_img = self.loader(left)
         right_img = self.loader(right)

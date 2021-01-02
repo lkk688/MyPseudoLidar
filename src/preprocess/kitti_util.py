@@ -43,22 +43,27 @@ class Calibration(object):
 
     def __init__(self, calib_filepath):
 
+        #The calibration parameters are stored in row-major order. 
+        # It contains the 3x4 projection matrix parameters which describe the mapping of 3D points in the world to 2D points in an image.
         calibs = self.read_calib_file(calib_filepath)
+        #P_rect[i]: projective transformation from rectified reference camera frame to cam[i] . Note that bx[i] denotes the baseline with respect to the reference camera 0.
         # Projection matrix from rect camera coord to image2 coord
-        self.P = calibs['P2']
+        self.P = calibs['P2'] #P_rect2cam2
         self.P = np.reshape(self.P, [3, 4])
         # Rigid transform from Velodyne coord to reference camera coord
+        #euclidean transformation from lidar to reference camera cam0
         self.V2C = calibs['Tr_velo_to_cam']
         self.V2C = np.reshape(self.V2C, [3, 4])
         self.C2V = inverse_rigid_trans(self.V2C)
         # Rotation from reference camera coord to rect camera coord
+        #R0_rect : rotation to account for rectification for points in the reference camera.
         self.R0 = calibs['R0_rect']
         self.R0 = np.reshape(self.R0, [3, 3])
 
         # Camera intrinsics and extrinsics
         self.c_u = self.P[0, 2]
         self.c_v = self.P[1, 2]
-        self.f_u = self.P[0, 0]
+        self.f_u = self.P[0, 0]#focal length
         self.f_v = self.P[1, 1]
         self.b_x = self.P[0, 3] / (-self.f_u)  # relative
         self.b_y = self.P[1, 3] / (-self.f_v)

@@ -45,7 +45,7 @@ parser.add_argument('--kitti2015', action='store_true',
                     help='If false, use 3d kitti dataset. If true, use kitti stereo 2015, default: False')
 parser.add_argument('--dataset', default='kitti', choices=['sceneflow', 'kitti'],
                     help='train with sceneflow or kitti')
-parser.add_argument('--datapath', default='',
+parser.add_argument('--datapath', default='/mnt/DATA5T/Argoverse/argoverse-conv-rect-mynew/training',
                     help='root folder of the dataset')
 parser.add_argument('--split_train', default='Kitti/object/train.txt',
                     help='data splitting file for training')
@@ -67,7 +67,7 @@ parser.add_argument('--lr_stepsize', nargs='+', type=int, default=[200],
 parser.add_argument('--lr_gamma', default=0.1, type=float,
                     help='gamma of the learning rate scheduler')
 # resume
-parser.add_argument('--resume', default=None,
+parser.add_argument('--resume', default='./sdn_kitti_object_trainval.pth',
                     help='path to a checkpoint')
 parser.add_argument('--pretrain', default=None,
                     help='path to pretrained model')
@@ -86,9 +86,9 @@ parser.add_argument('--checkpoint_interval', type=int, default=5,
                     help='save checkpoint every n epoch.')
 parser.add_argument('--generate_depth_map', action='store_true',
                     help='if true, generate depth maps and save the in save_path/depth_maps/{data_tag}/')
-parser.add_argument('--data_list', default=None,
+parser.add_argument('--data_list', default='./split/argo.txt',
                     help='generate depth maps for all the data in this list')
-parser.add_argument('--data_tag', default=None,
+parser.add_argument('--data_tag', default='Argo_trainval',
                     help='the suffix of the depth maps folder')
 args = parser.parse_args()
 best_RMSE = 1e10
