@@ -43,8 +43,9 @@ if __name__ == '__main__':
     #parser.add_argument('--data_path', type=str, default='~/Kitti/object/training/')
     #parser.add_argument('--split_file', type=str, default='~/Kitti/object/train.txt')
 
-    parser.add_argument('--data_path', type=str, default='/mnt/DATA5T/Argoverse/argoverse-conv-rect-mynew/training')
-    parser.add_argument('--split_file', type=str, default='/home/kaikai/Documents/PyCharmremote/PseudoLidar/Pseudo_Lidar_V2-master/split/argo.txt')#all argo image files
+    #parser.add_argument('--data_path', type=str, default='/Developer/Dataset/Argoverse/argoverse-conv-rect-mynew/training')
+    parser.add_argument('--data_path', type=str, default='/Developer/Dataset/Argoverse/argoverse-conv-rect-all/training')
+    parser.add_argument('--split_file', type=str, default='/Developer/3DObject/MyPseudoLidar/split/fullargo.txt')#all argo image files
     args = parser.parse_args()
 
     assert os.path.isdir(args.data_path)
@@ -77,7 +78,7 @@ if __name__ == '__main__':
         lidar = np.fromfile(lidar_dir + '/' + fn, dtype=np.float32).reshape((-1, 4))[:, :3] #shape: (96572, 3)
         image_file = '{}{}.png'.format(image_dir, predix)
         #image = ssc.imread(image_file)
-        image = imageio.imread(image_file)#(2056, 2464, 3)
+        image = imageio.imread(image_file)#(2056, 2464, 3), now: (514, 616, 3)
         height, width = image.shape[:2]
         depth_map = generate_dispariy_from_velo(lidar, height, width, calib)
         np.save(depth_dir + '/' + predix, depth_map)

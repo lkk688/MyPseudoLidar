@@ -40,8 +40,11 @@ def dynamic_baseline(calib_info):
     return baseline
 
 class SubmiteDataset(object):
-    def __init__(self, filepath, split, dynamic_bs=False, kitti2015=False):
+    #def __init__(self, filepath, split, dynamic_bs=False, kitti2015=False):
+    def __init__(self, filepath, split, argo=False, dynamic_bs=False, kitti2015=False): #pass argo option
         self.dynamic_bs = dynamic_bs
+        self.argo = argo
+
         left_fold = 'image_2/'
         right_fold = 'image_3/'
         calib_fold = 'calib/'
@@ -74,15 +77,26 @@ class SubmiteDataset(object):
             calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * dynamic_baseline(calib_info)
         else:
             #calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.54
-            calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.2986
+            #calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.2986
+            if(self.argo):
+                calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.2986 # Different baseline
+            else:
+                calib = np.reshape(calib_info['P2'], [3, 4])[0, 0] * 0.54
         imgL = Image.open(left_img).convert('RGB')
         imgR = Image.open(right_img).convert('RGB')
         imgL = self.trans(imgL)[None, :, :, :]
         imgR = self.trans(imgR)[None, :, :, :]
         # pad to (384, 1248)
         B, C, H, W = imgL.shape
-        top_pad = 384 - H
-        right_pad = 1248 - W
+        # top_pad = 384 - H
+        # right_pad = 1248 - W
+        if(self.argo): # pad to (544, 640), argo original image size is 2056(H), 2464(W),  rescaled images to become 1/4th of the original size /4=514*616
+            top_pad = 544 - H # 544 - 514 = 30
+            right_pad = 640 - W # 640 - 616 = 24
+        else: # pad to (384, 1248), Kitti image size is 384(H)*1248(W)
+            top_pad = 384 - H
+            right_pad = 1248 - W
+
         imgL = F.pad(imgL, (0, right_pad, top_pad, 0), "constant", 0)
         imgR = F.pad(imgR, (0, right_pad, top_pad, 0), "constant", 0)
         filename = self.left_test[item].split('/')[-1][:-4]

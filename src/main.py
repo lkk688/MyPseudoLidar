@@ -23,6 +23,11 @@ from dataloader import KITTILoader_dataset3d
 from dataloader import SceneFlowLoader
 from dataloader import listflowfile
 
+#new add used to save evaluation results
+from torch.autograd import Variable
+import pandas as pd
+import matplotlib.pyplot as plt
+
 parser = configargparse.ArgParser(description='PSMNet')
 parser.add('-c', '--config', required=True,
            is_config_file=True, help='config file')
@@ -43,15 +48,17 @@ parser.add_argument('--maxdepth', type=int, default=80,
 # dataset
 parser.add_argument('--kitti2015', action='store_true',
                     help='If false, use 3d kitti dataset. If true, use kitti stereo 2015, default: False')
-parser.add_argument('--dataset', default='kitti', choices=['sceneflow', 'kitti'],
-                    help='train with sceneflow or kitti')
-parser.add_argument('--datapath', default='/mnt/DATA5T/Argoverse/argoverse-conv-rect-mynew/training',
+# parser.add_argument('--dataset', default='kitti', choices=['sceneflow', 'kitti'],
+#                     help='train with sceneflow or kitti')
+parser.add_argument('--dataset', default='argo', choices=['sceneflow', 'kitti', 'argo'],
+                    help='train with sceneflow or kitti') #add argo dataset as one option
+parser.add_argument('--datapath', default='/Developer/Dataset/Argoverse/argoverse-conv-rect-mynew/training',
                     help='root folder of the dataset')
 parser.add_argument('--split_train', default='Kitti/object/train.txt',
                     help='data splitting file for training')
 parser.add_argument('--split_val', default='Kitti/object/subval.txt',
                     help='data splitting file for validation')
-parser.add_argument('--epochs', type=int, default=300,
+parser.add_argument('--epochs', type=int, default=600,#300
                     help='number of training epochs')
 parser.add_argument('--btrain', type=int, default=12,
                     help='training batch size')
@@ -67,7 +74,7 @@ parser.add_argument('--lr_stepsize', nargs='+', type=int, default=[200],
 parser.add_argument('--lr_gamma', default=0.1, type=float,
                     help='gamma of the learning rate scheduler')
 # resume
-parser.add_argument('--resume', default='./sdn_kitti_object_trainval.pth',
+parser.add_argument('--resume', default='', #./sdn_kitti_object_trainval.pth
                     help='path to a checkpoint')
 parser.add_argument('--pretrain', default=None,
                     help='path to pretrained model')
@@ -82,7 +89,7 @@ parser.add_argument('--dynamic_bs', action='store_true',
                     help='If true, dynamically calculate baseline from calibration file. If false, use 0.54')
 parser.add_argument('--eval_interval', type=int, default=50,
                     help='evaluate model every n epochs')
-parser.add_argument('--checkpoint_interval', type=int, default=5,
+parser.add_argument('--checkpoint_interval', type=int, default=15,
                     help='save checkpoint every n epoch.')
 parser.add_argument('--generate_depth_map', action='store_true',
                     help='if true, generate depth maps and save the in save_path/depth_maps/{data_tag}/')
@@ -90,6 +97,10 @@ parser.add_argument('--data_list', default='./split/argo.txt',
                     help='generate depth maps for all the data in this list')
 parser.add_argument('--data_tag', default='Argo_trainval',
                     help='the suffix of the depth maps folder')
+
+parser.add_argument('--argo', action='store_true',
+                    help='it gives argo full size image option') #new added
+
 args = parser.parse_args()
 best_RMSE = 1e10
 
@@ -106,20 +117,21 @@ def main():
     writer = SummaryWriter(args.save_path + '/tensorboardx')
 
     # Data Loader
-    if args.generate_depth_map:
+    if args.generate_depth_map:# for inference estimation
         TrainImgLoader = None
         import dataloader.KITTI_submission_loader  as KITTI_submission_loader
         TestImgLoader = torch.utils.data.DataLoader(
-            KITTI_submission_loader.SubmiteDataset(args.datapath, args.data_list, args.dynamic_bs),
+            KITTI_submission_loader.SubmiteDataset(args.datapath, args.data_list, args.argo, args.dynamic_bs),
             batch_size=args.bval, shuffle=False, num_workers=args.workers, drop_last=False)
-    elif args.dataset == 'kitti':
+    #elif args.dataset == 'kitti':
+    elif args.dataset == 'kitti' or args.dataset == 'argo':
         train_data, val_data = KITTILoader3D.dataloader(args.datapath, args.split_train, args.split_val,
                                                         kitti2015=args.kitti2015)
         TrainImgLoader = torch.utils.data.DataLoader(
-            KITTILoader_dataset3d.myImageFloder(train_data, True, kitti2015=args.kitti2015, dynamic_bs=args.dynamic_bs),
+            KITTILoader_dataset3d.myImageFloder(train_data, True, kitti2015=args.kitti2015, dynamic_bs=args.dynamic_bs, argo=args.argo),
             batch_size=args.btrain, shuffle=True, num_workers=args.workers, drop_last=False, pin_memory=True)
         TestImgLoader = torch.utils.data.DataLoader(
-            KITTILoader_dataset3d.myImageFloder(val_data, False, kitti2015=args.kitti2015, dynamic_bs=args.dynamic_bs),
+            KITTILoader_dataset3d.myImageFloder(val_data, False, kitti2015=args.kitti2015, dynamic_bs=args.dynamic_bs, argo=args.argo),
             batch_size=args.bval, shuffle=False, num_workers=args.workers, drop_last=False, pin_memory=True)
     else:
         train_data, val_data = listflowfile.dataloader(args.datapath)
@@ -183,13 +195,20 @@ def main():
 
     # evaluation
     if args.evaluate:
+        #Add array for plotting metric values
+        evaluate_metrics = []
         evaluate_metric = utils_func.Metric()
         ## training ##
         for batch_idx, (imgL_crop, imgR_crop, disp_crop_L, calib) in enumerate(TestImgLoader):
             start_time = time.time()
             test(imgL_crop, imgR_crop, disp_crop_L, calib, evaluate_metric, model)
-
-            log.info(evaluate_metric.print(batch_idx, 'EVALUATE') + ' Time:{:.3f}'.format(time.time() - start_time))
+            lasttime=time.time() - start_time
+            log.info(evaluate_metric.print(batch_idx, 'EVALUATE') + ' Time:{:.3f}'.format(lasttime))
+            evaluate_metrics.append((batch_idx, lasttime, evaluate_metric.losses.avg, evaluate_metric.RMSELIs.avg, evaluate_metric.RMSELGs.avg, evaluate_metric.ABSRs.avg, evaluate_metric.SQRs.avg, evaluate_metric.DELTA.avg, evaluate_metric.DELTASQ.avg, evaluate_metric.DELTACU.avg))
+        #Plot the metric
+        columnname=['EPOCH', 'Lasttime', 'LOSSavg', 'RMSE_Linear', 'RMSE_Log', 'ABS_Relative', 'SQ_Relative', 'DELTA', 'DELTA_SQ', 'DELTA_CU']
+        df_evaluate_metric = pd.DataFrame(evaluate_metrics, columns=columnname)
+        plot_test_metric(df_evaluate_metric, columnname)
         import sys
         sys.exit()
 
@@ -208,7 +227,7 @@ def main():
         # lw.update(train_metric.get_info(), epoch, 'Train')
 
         ## testing ##
-        is_best = False
+        is_best = False 
         if (epoch % args.eval_interval) == 0:
             test_metric = utils_func.Metric()
             tqdm_test_loader = tqdm(TestImgLoader, total=len(TestImgLoader))
@@ -232,7 +251,21 @@ def main():
         }, is_best, epoch, folder=args.save_path)
     # lw.done()
 
-
+def plot_test_metric(df_test_metric, columnname):
+    fig, axes = plt.subplots(nrows=5, ncols=2, constrained_layout=True, figsize=(20,20))
+    columns = columnname #[Epoch, time 'LOSS', 'RMSE_Linear', 'RMSE_Log', 'ABS_Relative', 'SQ_Relative', 'DELTA', 'DELTA_SQ', 'DELTA_CU']
+    
+    for ax, column in zip(axes.flat, columns):
+      ax.plot(df_test_metric['EPOCH'], df_test_metric[column], label='Test')
+      ax.set_title(column)
+      ax.set_ylabel(column)
+      ax.set_xlabel('Epoch')
+      ax.grid(True)
+      ax.legend(loc="lower right")
+     
+    plt.show()
+    fig.savefig("test_metric_aftertrain.pdf")
+    
 def save_checkpoint(state, is_best, epoch, filename='checkpoint.pth.tar', folder='result/default'):
     torch.save(state, folder + '/' + filename)
     if is_best:
