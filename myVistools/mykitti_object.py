@@ -12,7 +12,8 @@ import cv2
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
-sys.path.append(os.path.join(ROOT_DIR, "mayavi"))
+print(ROOT_DIR)
+#sys.path.append(os.path.join(ROOT_DIR, "mayavi"))
 import kitti_util as utils
 import argparse
 
@@ -978,7 +979,7 @@ if __name__ == "__main__":
 #     if args.pred:
 #         assert os.path.exists(args.dir + "/" + args.split + "/pred")
 
-#     if args.vis:
-#         dataset_viz(args.dir, args)
+    if args.vis:
+        dataset_viz(args.dir, args)
 #     if args.gen_depth:
 #         depth_to_lidar_format(args.dir, args)
