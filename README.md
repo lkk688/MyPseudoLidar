@@ -127,17 +127,43 @@ The image result is
 ![Figure](figures/lidardepthmaponimage.png)
 
 ### Start training
+Using the following code the start training based on kitti pretrained model
+```bash
+MyPseudoLidar$ python src/main.py -c ./src/configs/sdn_argo_fulltrain.config --dynamic_bs --data_tag Argo_trainfull --argo
+```
+If the training is stopped, you can resume from the previous training
 ```bash
 MyPseudoLidar$ python src/main.py -c ./src/configs/sdn_argo_fulltrain.config --dynamic_bs --resume /Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_525.pth.tar --data_tag Argo_trainfull --argo
+
+[2021-01-10 10:30:25 main.py:225] INFO     TRAIN Epoch790:0     L 2.039 RLI 4.239 RLO 0.127 ABS 0.038 SQ 0.631 DEL 0.970 DELQ 0.982 DELC 0.989
+100%|████████████████████████████████████████████████████████████████████| 286/286 [08:16<00:00,  1.73s/it]
+[2021-01-10 10:38:41 main.py:225] INFO     TRAIN Epoch791:0     L 2.051 RLI 4.240 RLO 0.128 ABS 0.038 SQ 0.624 DEL 0.969 DELQ 0.982 DELC 0.989
+100%|████████████████████████████████████████████████████████████████████| 286/286 [08:16<00:00,  1.73s/it]
+[2021-01-10 10:46:58 main.py:225] INFO     TRAIN Epoch792:0     L 2.026 RLI 4.210 RLO 0.127 ABS 0.038 SQ 0.622 DEL 0.970 DELQ 0.982 DELC 0.989
+100%|████████████████████████████████████████████████████████████████████| 286/286 [08:16<00:00,  1.73s/it]
+[2021-01-10 10:55:14 main.py:225] INFO     TRAIN Epoch793:0     L 2.056 RLI 4.254 RLO 0.128 ABS 0.038 SQ 0.634 DEL 0.969 DELQ 0.982 DELC 0.989
+100%|████████████████████████████████████████████████████████████████████| 286/286 [08:16<00:00,  1.73s/it]
+[2021-01-10 11:03:30 main.py:225] INFO     TRAIN Epoch794:0     L 2.042 RLI 4.251 RLO 0.128 ABS 0.038 SQ 0.636 DEL 0.969 DELQ 0.982 DELC 0.989
+100%|████████████████████████████████████████████████████████████████████| 286/286 [08:16<00:00,  1.73s/it]
+[2021-01-10 11:11:46 main.py:225] INFO     TRAIN Epoch795:0     L 2.032 RLI 4.223 RLO 0.127 ABS 0.038 SQ 0.622 DEL 0.969 DELQ 0.982 DELC 0.989
+100%|████████████████████████████████████████████████████████████████████| 286/286 [08:16<00:00,  1.73s/it]
+[2021-01-10 11:20:03 main.py:225] INFO     TRAIN Epoch796:0     L 2.050 RLI 4.257 RLO 0.128 ABS 0.038 SQ 0.631 DEL 0.969 DELQ 0.982 DELC 0.989
+100%|████████████████████████████████████████████████████████████████████| 286/286 [08:16<00:00,  1.73s/it]
+[2021-01-10 11:28:19 main.py:225] INFO     TRAIN Epoch797:0     L 2.060 RLI 4.249 RLO 0.128 ABS 0.038 SQ 0.628 DEL 0.969 DELQ 0.982 DELC 0.989
+100%|████████████████████████████████████████████████████████████████████| 286/286 [08:16<00:00,  1.73s/it]
+[2021-01-10 11:36:36 main.py:225] INFO     TRAIN Epoch798:0     L 2.056 RLI 4.241 RLO 0.127 ABS 0.038 SQ 0.624 DEL 0.969 DELQ 0.982 DELC 0.989
+100%|████████████████████████████████████████████████████████████████████| 286/286 [08:16<00:00,  1.73s/it]
+[2021-01-10 11:44:52 main.py:225] INFO     TRAIN Epoch799:0     L 2.062 RLI 4.262 RLO 0.128 ABS 0.038 SQ 0.630 DEL 0.969 DELQ 0.982 DELC 0.989
 ```
-Trained model is located in
+The final trained model is located in
 ```bash
 $ ls /Developer/3DObject/MyPseudoLidarresults/sdn_argo
 checkpoint_795.pth.tar  model_best.pth.tar
 ```
 checkpoint_795 is the last model, available in "P100: /Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_795.pth.tar"
 
-## Perform evaluation
+## After Training
+### Perform evaluation
 ```bash
 MyPseudoLidar$ python src/main.py -c ./src/configs/sdn_argo_fulltrain.config --dynamic_bs --evaluate --data_tag Argo_trainfull --argo --resume /Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_795.pth.tar
 ...
@@ -152,9 +178,24 @@ If using VSCode to debug the code, the args setup is
 "args": ["-c", "./src/configs/sdn_argo_fulltrain.config", "--dynamic_bs", "--evaluate", "--resume", "/Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_795.pth.tar", "--data_tag", "Argo_trainfull", "--argo"],
 ```
 
-## Generate estimated depth map
+### Generate predicted depth map
 ```bash
 MyPseudoLidar$ python src/main.py -c ./src/configs/sdn_argo_fulltrain.config --dynamic_bs --generate_depth_map --resume /Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_795.pth.tar --data_tag Argo_trainfull --argo
 ```
 Using the trained model to predict the depth map based on the TestImgLoader (val_data), the generated depth map is: "/Developer/3DObject/MyPseudoLidarresults/sdn_argo/depth_maps/Argo_trainfull/". All depth files are .npy from 000000.npy to 001902.npy
+One sample (000000.npy) result is 
+![Figure](figures/estimateddepth1aftertraining.png)
 
+
+### Convert depth maps to Pseudo-Lidar Point Clouds
+```bash
+python ./src/preprocess/generate_lidar_from_depth.py --calib_dir /Developer/Dataset/Argoverse/argoverse-conv-rect-all/training/calib
+--depth_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/depth_maps/Argo_trainfull/
+--save_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull/
+```
+Finish Depth Finish Depth 001902.bin in "/Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull/"
+Visualize the Pseudo Lidar results via Mayavi
+```bash
+MyPseudoLidar/myVistools$ python mykitti_object.py --mylidarvis -d /mnt/DATA5T/Argoverse/ArgoPseudoLidar/pseudo_lidar_Argo_trainfull/ --ind 10
+```
+![Figure](figures/pseudolidaraftertraining.png)
