@@ -162,6 +162,31 @@ checkpoint_795.pth.tar  model_best.pth.tar
 ```
 checkpoint_795 is the last model, available in "P100: /Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_795.pth.tar"
 
+Use the following code to check the best RMSE model
+```bash
+import torch
+import numpy as np
+import os
+import glob
+
+
+
+model_path = '/Developer/3DObject/MyPseudoLidarresults/sdn_argo/'
+checkpointList = glob.glob(model_path+'/checkpoint*')
+
+for idx, model in enumerate(checkpointList):
+    checkpoint = torch.load(checkpointList[idx])
+    best_RMSE = checkpoint['best_RMSE']
+    checkpointname = checkpointList[idx].split('/')[-1]
+    print(f'{checkpointname} checkpoint ... name {model}')
+    print(best_RMSE)
+```
+The result looks like
+```bash
+checkpoint_780.pth.tar checkpoint ... name /Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_780.pth.tar
+tensor(4.8437)
+```
+
 ## After Training
 ### Perform evaluation
 ```bash
