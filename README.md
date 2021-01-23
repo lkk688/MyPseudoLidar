@@ -199,3 +199,24 @@ Visualize the Pseudo Lidar results via Mayavi
 MyPseudoLidar/myVistools$ python mykitti_object.py --mylidarvis -d /mnt/DATA5T/Argoverse/ArgoPseudoLidar/pseudo_lidar_Argo_trainfull/ --ind 10
 ```
 ![Figure](figures/pseudolidaraftertraining.png)
+Compare with the results before training, the boundaries are much better.
+
+### Predict Ground Planes
+```bash
+python ./src/preprocess/kitti_process_RANSAC.py --calib_dir /Developer/Dataset/Argoverse/argoverse-conv-rect-all/training/calib
+--lidar_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull/
+--planes_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull_planes/
+```
+000000.bin ~ 001902.bin are generated under pseudo_lidar_Argo_trainfull_planes
+
+### Sparsify Pseudo-LiDAR
+```bash
+python ./src/preprocess/kitti_sparsify.py --pl_path /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull/
+--sparse_pl_path /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull_sparse/
+```
+000000.bin ~ 001902.bin are generated under pseudo_lidar_Argo_trainfull_sparse
+Visualize the sparse Pseudo Lidar via Mayavi
+```bash
+MyPseudoLidar/myVistools$ python mykitti_object.py --mylidarvis -d /mnt/DATA5T/Argoverse/ArgoPseudoLidar/pseudo_lidar_Argo_trainfull_sparse/ --ind 10
+```
+![Figure](figures/sparsepseudolidaraftertraining.png)
