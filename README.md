@@ -205,43 +205,55 @@ If using VSCode to debug the code, the args setup is
 
 ### Generate predicted depth map
 ```bash
-MyPseudoLidar$ python src/main.py -c ./src/configs/sdn_argo_fulltrain.config --dynamic_bs --generate_depth_map --resume /Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_795.pth.tar --data_tag Argo_trainfull --argo
+MyPseudoLidar$ python src/main.py -c ./src/configs/sdn_argo_fulltrain.config --dynamic_bs --generate_depth_map --data_list ./split/fullargo.txt --resume /Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_795.pth.tar --data_tag Argo_full --argo
 ```
-Using the trained model to predict the depth map based on the TestImgLoader (val_data), the generated depth map is: "/Developer/3DObject/MyPseudoLidarresults/sdn_argo/depth_maps/Argo_trainfull/". All depth files are .npy from 000000.npy to 001902.npy
+If using VSCode, the args are
+```bash
+"args": ["-c", "./src/configs/sdn_argo_fulltrain.config", "--dynamic_bs", "--generate_depth_map", "--data_list", "./split/fullargo.txt", "--resume", "/Developer/3DObject/MyPseudoLidarresults/sdn_argo/checkpoint_795.pth.tar", "--data_tag", "Argo_full", "--argo"],
+```
+Using the trained model to predict the depth map based on the TestImgLoader (based on the ./split/fullargo.txt for all argo data), the generated depth map is: "/Developer/3DObject/MyPseudoLidarresults/sdn_argo/depth_maps/Argo_full/". All depth files are .npy from 000000.npy to 009099.npy. (Argo_trainful (particial data) has depth file to 001902.npy)
 One sample (000000.npy) result is 
 ![Figure](figures/estimateddepth1aftertraining.png)
 
 
 ### Convert depth maps to Pseudo-Lidar Point Clouds
 ```bash
-python ./src/preprocess/generate_lidar_from_depth.py --calib_dir /Developer/Dataset/Argoverse/argoverse-conv-rect-all/training/calib
---depth_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/depth_maps/Argo_trainfull/
---save_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull/
+python ./src/preprocess/generate_lidar_from_depth.py \
+ --calib_dir /Developer/Dataset/Argoverse/argoverse-conv-rect-all/training/calib --depth_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/depth_maps/Argo_full/ \
+ --save_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_full/
 ```
-Finish Depth Finish Depth 001902.bin in "/Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull/"
+Finish Depth Finish Depth 009099.bin in "/Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_full/"
 Visualize the Pseudo Lidar results via Mayavi
 ```bash
-MyPseudoLidar/myVistools$ python mykitti_object.py --mylidarvis -d /mnt/DATA5T/Argoverse/ArgoPseudoLidar/pseudo_lidar_Argo_trainfull/ --ind 10
+MyPseudoLidar/myVistools$ python mykitti_object.py --mylidarvis -d /mnt/DATA5T/Argoverse/ArgoPseudoLidar/pseudo_lidar_Argo_full/ --ind 10
 ```
 ![Figure](figures/pseudolidaraftertraining.png)
 Compare with the results before training, the boundaries are much better.
 
 ### Predict Ground Planes
 ```bash
-python ./src/preprocess/kitti_process_RANSAC.py --calib_dir /Developer/Dataset/Argoverse/argoverse-conv-rect-all/training/calib
---lidar_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull/
---planes_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull_planes/
+python ./src/preprocess/kitti_process_RANSAC.py --calib_dir /Developer/Dataset/Argoverse/argoverse-conv-rect-all/training/calib \
+    --lidar_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_full/ \
+    --planes_dir /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_full_planes/
 ```
-000000.bin ~ 001902.bin are generated under pseudo_lidar_Argo_trainfull_planes
+000000.txt ~ 009099.txt are generated under pseudo_lidar_Argo_full_planes. 
+The content of the plane file is like
+```bash
+cat /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_full_planes/000001.txt
+# Plane
+Width 4
+Height 1
+1.092321e-02 -9.999349e-01 -3.290347e-03 1.635837e+00
+```
 
 ### Sparsify Pseudo-LiDAR
 ```bash
-python ./src/preprocess/kitti_sparsify.py --pl_path /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull/
---sparse_pl_path /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_trainfull_sparse/
+python ./src/preprocess/kitti_sparsify_argo.py --pl_path /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_full/ \
+   --sparse_pl_path /Developer/3DObject/MyPseudoLidarresults/sdn_argo/pseudo_lidar_Argo_full_sparse/
 ```
-000000.bin ~ 001902.bin are generated under pseudo_lidar_Argo_trainfull_sparse
+000000.bin ~ 009099.bin are generated under pseudo_lidar_Argo_full_sparse
 Visualize the sparse Pseudo Lidar via Mayavi
 ```bash
-MyPseudoLidar/myVistools$ python mykitti_object.py --mylidarvis -d /mnt/DATA5T/Argoverse/ArgoPseudoLidar/pseudo_lidar_Argo_trainfull_sparse/ --ind 10
+MyPseudoLidar/myVistools$ python mykitti_object.py --mylidarvis -d /mnt/DATA5T/Argoverse/ArgoPseudoLidar/pseudo_lidar_Argo_full_sparse/ --ind 10
 ```
 ![Figure](figures/sparsepseudolidaraftertraining.png)
